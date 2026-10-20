@@ -42,13 +42,14 @@ jobs:
       REP_TOKEN: ${{ secrets.REP_TOKEN }}
     steps:
       # The rep CLI, built from source (private repo, no releases yet)
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: expect-digital/rep
           ref: main
+          persist-credentials: false
           token: ${{ secrets.REP_SRC_TOKEN }}
           path: .rep-src
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: .rep-src/go.mod
           cache-dependency-path: .rep-src/go.sum
