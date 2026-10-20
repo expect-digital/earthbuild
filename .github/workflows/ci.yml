@@ -104,7 +104,7 @@ jobs:
           export TAG_SUFFIX="latest"
           ./build/linux/amd64/earthly --ci --push --build-arg TAG_SUFFIX +ci-release
       - name: Build +ci-release using latest earth build (fork - no push)
-        if: github.repository != 'earthbuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
+        if: github.repository == 'earthbuild/earthbuild' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         run: |-
           export TAG_SUFFIX="latest"
           # Build ci-release (builds binary and buildkitd but doesn't push)
@@ -112,6 +112,7 @@ jobs:
           # Explicitly output the buildkitd image to local docker daemon
           ./build/linux/amd64/earthly --ci --image --build-arg TAG="${GITHUB_SHA}-${TAG_SUFFIX}" --build-arg DOCKERHUB_BUILDKIT_IMG=buildkitd-staging ./buildkitd+buildkitd
       - name: Save buildkitd image tarball (all runs)
+        if: github.repository == 'earthbuild/earthbuild'
         # Shipping buildkitd as a GHA artifact -- rather than having every
         # downstream test job pull it from ghcr -- moves ~67 in-run image
         # fetches off ghcr and onto in-run artifact storage, which does not
@@ -138,7 +139,7 @@ jobs:
         # Fork PRs cannot read the binary from ghcr, so it ships in the
         # artifact. Non-fork jobs fetch it via `earth upgrade` instead --
         # rebuilding it here would be minutes of redundant work every run.
-        if: github.repository != 'earthbuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
+        if: github.repository == 'earthbuild/earthbuild' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         run: |-
           set -euo pipefail
           export TAG_SUFFIX="latest"
@@ -153,6 +154,7 @@ jobs:
             --DEFAULT_INSTALLATION_NAME=earth \
             ./artifacts-standard/earthly
       - name: Upload artifacts
+        if: github.repository == 'earthbuild/earthbuild'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: earth-build-latest
@@ -163,6 +165,7 @@ jobs:
   docker-tests:
     name: Docker
     needs: fast-check-and-build
+    if: github.repository == 'earthbuild/earthbuild'
     permissions:
       contents: read
       packages: read
@@ -176,6 +179,7 @@ jobs:
   docker-examples:
     name: Docker Examples
     needs: fast-check-and-build
+    if: github.repository == 'earthbuild/earthbuild'
     permissions:
       contents: read
       packages: read
@@ -191,6 +195,7 @@ jobs:
   docker-integrations:
     name: Docker Integrations
     needs: fast-check-and-build
+    if: github.repository == 'earthbuild/earthbuild'
     permissions:
       contents: read
       packages: read
@@ -207,6 +212,7 @@ jobs:
   podman-tests:
     name: Podman
     needs: fast-check-and-build
+    if: github.repository == 'earthbuild/earthbuild'
     permissions:
       contents: read
       packages: read
@@ -221,6 +227,7 @@ jobs:
   podman-examples:
     name: Podman Examples
     needs: fast-check-and-build
+    if: github.repository == 'earthbuild/earthbuild'
     permissions:
       contents: read
       packages: read
@@ -257,12 +264,16 @@ jobs:
         env:
           # Anything other than success - failure, cancelled, or skipped
           # (a suite is skipped only when something it needed failed) - is a
-          # red gate.
+          # red gate. Outside earthbuild/earthbuild (a fork's own CI) the suites
+          # are skipped on purpose: they need +ci-release's images, which a fork
+          # can neither push nor fetch, so there only fast-check-and-build counts.
           NEEDS: ${{ toJSON(needs) }}
+          UPSTREAM: ${{ github.repository == 'earthbuild/earthbuild' }}
         run: |-
           set -euo pipefail
           jq -r 'to_entries[] | "\(.value.result)\t\(.key)"' <<< "$NEEDS" | sort
-          if jq -e 'any(.[]; .result != "success")' >/dev/null <<< "$NEEDS"; then
+          if jq -e --arg up "$UPSTREAM" 'to_entries | any(.[]; .value.result != "success"
+              and ($up == "true" or .key == "fast-check-and-build" or .value.result != "skipped"))' >/dev/null <<< "$NEEDS"; then
             echo "::error::One or more CI suites did not succeed"
             exit 1
           fi
