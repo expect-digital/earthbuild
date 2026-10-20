@@ -159,7 +159,7 @@ jobs:
         env:
           INPUTS_RUNS_ON: ${{inputs.RUNS_ON}}
       - name: Build and push +ci-release using latest earth build
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name != 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         run: |-
           # shellcheck disable=SC2086  # INPUTS_SUDO is "" or "sudo -E": it must word-split
           scripts/ci/earth-retry.sh --binary "$INPUTS_BINARY" --sudo "$INPUTS_SUDO" --sleep 3 --bootstrap "$INPUTS_SUDO ./build/linux/amd64/earthly bootstrap" \
