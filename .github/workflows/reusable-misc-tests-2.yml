@@ -86,7 +86,7 @@ jobs:
           INPUTS_BUILT_EARTH_PATH: ${{inputs.BUILT_EARTH_PATH}}
       - name: Execute private image test (Earthly Only) # TODO move to separate workflow
         run: ${INPUTS_SUDO} "${INPUTS_BUILT_EARTH_PATH}" --ci ./tests+private-image-test
-        if: github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.repository.fork != true && (github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository)
         env:
           INPUTS_SUDO: ${{inputs.SUDO}}
           INPUTS_BUILT_EARTH_PATH: ${{inputs.BUILT_EARTH_PATH}}
