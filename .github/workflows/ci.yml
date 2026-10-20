@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: expect-digital/rep
-          ref: feat/tenant-cache
+          ref: main
           token: ${{ secrets.REP_SRC_TOKEN }}
           path: .rep-src
       - uses: actions/setup-go@v5
