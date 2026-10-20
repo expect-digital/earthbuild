@@ -38,6 +38,8 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EARTH_BUILDKIT_IMAGE: ghcr.io/earthbuild/earthbuild:buildkitd-v0.8.17-fix.1
+      REP_API_URL: ${{ vars.REP_API_URL }}
+      REP_TOKEN: ${{ secrets.REP_TOKEN }}
     steps:
       # The rep CLI, built from source (private repo, no releases yet)
       - uses: actions/checkout@v4

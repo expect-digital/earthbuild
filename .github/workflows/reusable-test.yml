@@ -50,6 +50,8 @@ jobs:
       EARTH_ORG: '${{inputs.EARTH_ORG}}'
       # Used in our github action as the token - TODO: look to change it into an input
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REP_API_URL: ${{ vars.REP_API_URL }}
+      REP_TOKEN: ${{ secrets.REP_TOKEN }}
     steps:
       # The rep CLI, built from source (private repo, no releases yet)
       - uses: actions/checkout@v4
