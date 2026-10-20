@@ -1,5 +1,7 @@
 VERSION 0.8
 
+# test version bump: 0.1
+
 ARG CR_ORG="earthbuild"
 ARG CR_REPO="earthbuild"
 ARG REGISTRY_BASE="ghcr.io"
