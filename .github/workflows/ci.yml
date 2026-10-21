@@ -73,7 +73,7 @@ jobs:
           earth config global.buildkit_additional_config "'[registry.\"docker.io\"]
           mirrors = [\"mirror.gcr.io\", \"public.ecr.aws\"]'"
       - name: Build latest earth using released earth
-        run: earth --use-inline-cache --artifact +earthly-linux-amd64/earthly ./build/linux/amd64/earthly
+        run: earth --use-inline-cache --artifact +earthly-linux-amd64/earthly --DEFAULT_INSTALLATION_NAME=earth ./build/linux/amd64/earthly
       - name: Set EARTH_VERSION_FLAG_OVERRIDES env
         run: |-
           set -euo pipefail
