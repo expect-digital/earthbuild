@@ -47,11 +47,27 @@ jobs:
     runs-on: ${{inputs.RUNS_ON}}
     env:
       FORCE_COLOR: 1
-      EARTH_ORG: "${{inputs.EARTH_ORG}}"
+      EARTH_ORG: '${{inputs.EARTH_ORG}}'
       # Used in our github action as the token - TODO: look to change it into an input
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REP_API_URL: ${{ vars.REP_API_URL }}
+      REP_TOKEN: ${{ secrets.REP_TOKEN }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      # The rep CLI, from a release of the private expect-digital/rep repo:
+      # the release vars.REP_VERSION names, or the latest one when it is unset
+      - run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          gh release download ${REP_VERSION:+"$REP_VERSION"} -R expect-digital/rep \
+            -p "rep-linux-$(dpkg --print-architecture)" -O "$RUNNER_TEMP/bin/rep"
+          chmod +x "$RUNNER_TEMP/bin/rep"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+        env:
+          GH_TOKEN: ${{ secrets.REP_SRC_TOKEN }}
+          REP_VERSION: ${{ vars.REP_VERSION }}
+
+      # Wakes the builder and points dagger / earth / buildx at it for the following steps
+      - run: rep connect
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: ${{ !inputs.SKIP_JOB }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -63,10 +79,10 @@ jobs:
           GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
-          BUILT_EARTH_PATH: "${{ inputs.BUILT_EARTH_PATH }}"
-          BINARY: "${{ inputs.BINARY }}"
-          USE_QEMU: "${{ inputs.USE_QEMU }}"
-          SUDO: "${{ inputs.SUDO }}"
+          BUILT_EARTH_PATH: '${{ inputs.BUILT_EARTH_PATH }}'
+          BINARY: '${{ inputs.BINARY }}'
+          USE_QEMU: '${{ inputs.USE_QEMU }}'
+          SUDO: '${{ inputs.SUDO }}'
       - name: Set EARTH_VERSION_FLAG_OVERRIDES env
         if: ${{ !inputs.SKIP_JOB }}
         run: |-
@@ -109,5 +125,5 @@ jobs:
         if: ${{ failure() }}
         uses: $/.github/actions/failure-diagnostics
         with:
-          BINARY: "${{ inputs.BINARY }}"
-          SUDO: "${{ inputs.SUDO }}"
+          BINARY: '${{ inputs.BINARY }}'
+          SUDO: '${{ inputs.SUDO }}'

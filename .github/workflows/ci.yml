@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - 'docs/**'
       - '**.md'
@@ -10,9 +10,8 @@ on:
       - '.github/CODEOWNERS'
       - 'LICENSE'
   pull_request:
-    branches: [ main, get-ci-working ]
+    branches: [main, get-ci-working]
   merge_group:
-
 
 # Workflow-wide floor only; every job narrows or widens this for itself.
 permissions:
@@ -39,7 +38,23 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EARTH_BUILDKIT_IMAGE: ghcr.io/earthbuild/earthbuild:buildkitd-v0.8.17-fix.1
+      REP_API_URL: ${{ vars.REP_API_URL }}
+      REP_TOKEN: ${{ secrets.REP_TOKEN }}
     steps:
+      # The rep CLI, from a release of the private expect-digital/rep repo:
+      # the release vars.REP_VERSION names, or the latest one when it is unset
+      - run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          gh release download ${REP_VERSION:+"$REP_VERSION"} -R expect-digital/rep \
+            -p "rep-linux-$(dpkg --print-architecture)" -O "$RUNNER_TEMP/bin/rep"
+          chmod +x "$RUNNER_TEMP/bin/rep"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+        env:
+          GH_TOKEN: ${{ secrets.REP_SRC_TOKEN }}
+          REP_VERSION: ${{ vars.REP_VERSION }}
+
+      # Wakes the builder and points dagger / earth / buildx at it for the following steps
+      - run: rep connect
       - uses: earthbuild/actions-setup@f4d20223e70dbb43b5fc08c4d857ab9cf0dbf3ae # v2.2.0
         with:
           # Authenticate the release-list API call so it isn't rate-limited on
@@ -59,7 +74,7 @@ jobs:
       - name: Login to GitHub Container Registry
         if: github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
-      - name: "Put back the git branch into git (EarthBuild uses it for tagging)"
+      - name: 'Put back the git branch into git (EarthBuild uses it for tagging)'
         run: |
           branch=""
           if [ -n "$GITHUB_HEAD_REF" ]; then
@@ -134,7 +149,7 @@ jobs:
             --DEFAULT_INSTALLATION_NAME=earth \
             ./artifacts-standard/earthly
       - name: Upload artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: earth-build-latest
           path: ./artifacts-standard/
@@ -149,7 +164,7 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-test-suite.yml
     with:
-      FRONTEND: "docker"
+      FRONTEND: 'docker'
     secrets:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
@@ -162,7 +177,7 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-examples-suite.yml
     with:
-      FRONTEND: "docker"
+      FRONTEND: 'docker'
     secrets:
       DOCKERHUB_MIRROR_PASSWORD: ${{ secrets.DOCKERHUB_MIRROR_PASSWORD }}
       DOCKERHUB_MIRROR_USERNAME: ${{ secrets.DOCKERHUB_MIRROR_USERNAME }}
@@ -177,7 +192,7 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-integration-suite.yml
     with:
-      FRONTEND: "docker"
+      FRONTEND: 'docker'
     secrets:
       DOCKERHUB_MIRROR_PASSWORD: ${{ secrets.DOCKERHUB_MIRROR_PASSWORD }}
       DOCKERHUB_MIRROR_USERNAME: ${{ secrets.DOCKERHUB_MIRROR_USERNAME }}
@@ -193,8 +208,8 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-test-suite.yml
     with:
-      FRONTEND: "podman"
-      SUDO: "sudo"
+      FRONTEND: 'podman'
+      SUDO: 'sudo'
     secrets:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
@@ -207,8 +222,8 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-examples-suite.yml
     with:
-      FRONTEND: "podman"
-      SUDO: "sudo"
+      FRONTEND: 'podman'
+      SUDO: 'sudo'
     secrets:
       DOCKERHUB_MIRROR_PASSWORD: ${{ secrets.DOCKERHUB_MIRROR_PASSWORD }}
       DOCKERHUB_MIRROR_USERNAME: ${{ secrets.DOCKERHUB_MIRROR_USERNAME }}
