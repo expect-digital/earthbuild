@@ -120,7 +120,7 @@ jobs:
         env:
           INPUTS_SUDO: ${{inputs.SUDO}}
       - name: Login to GitHub Container Registry
-        if: github.event.repository.fork != true && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: github.repository == 'EarthBuild/earthbuild' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | ${INPUTS_SUDO} "${INPUTS_BINARY}" login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
         env:
           INPUTS_SUDO: ${{inputs.SUDO}}
@@ -159,7 +159,7 @@ jobs:
         env:
           INPUTS_RUNS_ON: ${{inputs.RUNS_ON}}
       - name: Build and push +ci-release using latest earth build
-        if: github.event.repository.fork != true && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: github.repository == 'EarthBuild/earthbuild' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         run: |-
           # shellcheck disable=SC2086  # INPUTS_SUDO is "" or "sudo -E": it must word-split
           scripts/ci/earth-retry.sh --binary "$INPUTS_BINARY" --sudo "$INPUTS_SUDO" --sleep 3 --bootstrap "$INPUTS_SUDO ./build/linux/amd64/earthly bootstrap" \
@@ -168,7 +168,7 @@ jobs:
           INPUTS_SUDO: ${{inputs.SUDO}}
           INPUTS_BINARY: ${{inputs.BINARY}}
       - name: Build +ci-release using latest earth build (fork - no push)
-        if: github.event.repository.fork == true || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
+        if: github.repository != 'EarthBuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
         # Builds the binary and buildkitd, then loads the image locally - no push.
         # Note: earth-retry.sh -c takes a single-quoted snippet, so keep
         # apostrophes out of it. Comments belong here, not in the snippet.
@@ -209,7 +209,7 @@ jobs:
         # Fork PRs cannot read the earth binary from ghcr, so it ships in the
         # artifact. Non-fork jobs fetch it from ghcr instead -- rebuilding it
         # here would be minutes of redundant work on every run.
-        if: github.event.repository.fork == true || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
+        if: github.repository != 'EarthBuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
         run: |-
           set -euo pipefail
           # The test suites address the buildkitd daemon by container name, so
