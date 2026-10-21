@@ -88,10 +88,13 @@ jobs:
         if: github.repository != 'EarthBuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
         run: |-
           export TAG_SUFFIX="latest"
-          # Build ci-release (builds binary and buildkitd but doesn't push)
-          ./build/linux/amd64/earthly --ci --output --build-arg TAG_SUFFIX +ci-release
+          # Build ci-release (builds binary and buildkitd but doesn't push).
+          # Pass --disable-remote-registry-proxy because ./build/linux/amd64/earthly
+          # speaks the new registry.Copy protocol (#914) while EARTH_BUILDKIT_IMAGE
+          # in this job is still pinned to buildkitd-v0.8.17-fix.1 (old Server.Proxy).
+          ./build/linux/amd64/earthly --ci --output --disable-remote-registry-proxy --build-arg TAG_SUFFIX +ci-release
           # Explicitly output the buildkitd image to local docker daemon
-          ./build/linux/amd64/earthly --ci --image --build-arg TAG="${GITHUB_SHA}-${TAG_SUFFIX}" --build-arg DOCKERHUB_BUILDKIT_IMG=buildkitd-staging ./buildkitd+buildkitd
+          ./build/linux/amd64/earthly --ci --image --disable-remote-registry-proxy --build-arg TAG="${GITHUB_SHA}-${TAG_SUFFIX}" --build-arg DOCKERHUB_BUILDKIT_IMG=buildkitd-staging ./buildkitd+buildkitd
       - name: Save buildkitd image tarball (all runs)
         # Shipping buildkitd as a GHA artifact -- rather than having every
         # downstream test job pull it from ghcr -- moves ~67 in-run image

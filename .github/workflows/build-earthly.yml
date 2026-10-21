@@ -175,8 +175,8 @@ jobs:
         run: |
           # shellcheck disable=SC2016  # the snippet is passed verbatim to earth-retry.sh, which runs it
           scripts/ci/earth-retry.sh --binary "$INPUTS_BINARY" --sudo "$INPUTS_SUDO" --sleep 3 --bootstrap "$INPUTS_SUDO ./build/linux/amd64/earthly bootstrap" -c '
-            ${INPUTS_SUDO} ./build/linux/amd64/earthly --ci --output --build-arg TAG_SUFFIX +ci-release && \
-              ${INPUTS_SUDO} ./build/linux/amd64/earthly --ci --image --build-arg TAG="${GITHUB_SHA}-${TAG_SUFFIX}" --build-arg DOCKERHUB_BUILDKIT_IMG=buildkitd-staging ./buildkitd+buildkitd
+            ${INPUTS_SUDO} ./build/linux/amd64/earthly --ci --output --disable-remote-registry-proxy --build-arg TAG_SUFFIX +ci-release && \
+              ${INPUTS_SUDO} ./build/linux/amd64/earthly --ci --image --disable-remote-registry-proxy --build-arg TAG="${GITHUB_SHA}-${TAG_SUFFIX}" --build-arg DOCKERHUB_BUILDKIT_IMG=buildkitd-staging ./buildkitd+buildkitd
           '
         env:
           INPUTS_SUDO: ${{inputs.SUDO}}
