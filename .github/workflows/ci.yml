@@ -57,7 +57,7 @@ jobs:
 
       # --- Build Standard EarthBuild ---
       - name: Login to GitHub Container Registry
-        if: github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.repository == 'EarthBuild/earthbuild' && (github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
       - name: "Put back the git branch into git (EarthBuild uses it for tagging)"
         run: |
@@ -73,25 +73,28 @@ jobs:
           earth config global.buildkit_additional_config "'[registry.\"docker.io\"]
           mirrors = [\"mirror.gcr.io\", \"public.ecr.aws\"]'"
       - name: Build latest earth using released earth
-        run: earth --use-inline-cache --artifact +earthly-linux-amd64/earthly ./build/linux/amd64/earthly
+        run: earth --use-inline-cache --artifact +earthly-linux-amd64/earthly --DEFAULT_INSTALLATION_NAME=earth ./build/linux/amd64/earthly
       - name: Set EARTH_VERSION_FLAG_OVERRIDES env
         run: |-
           set -euo pipefail
           EARTH_VERSION_FLAG_OVERRIDES="$(tr -d '\n' < .earth_version_flag_overrides)"
           echo "EARTH_VERSION_FLAG_OVERRIDES=$EARTH_VERSION_FLAG_OVERRIDES" >> "$GITHUB_ENV"
       - name: Build and push +ci-release using latest earth build
-        if: github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.repository == 'EarthBuild/earthbuild' && (github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository)
         run: |-
           export TAG_SUFFIX="latest"
           ./build/linux/amd64/earthly --ci --push --build-arg TAG_SUFFIX +ci-release
       - name: Build +ci-release using latest earth build (fork - no push)
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        if: github.repository != 'EarthBuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
         run: |-
           export TAG_SUFFIX="latest"
-          # Build ci-release (builds binary and buildkitd but doesn't push)
-          ./build/linux/amd64/earthly --ci --output --build-arg TAG_SUFFIX +ci-release
+          # Build ci-release (builds binary and buildkitd but doesn't push).
+          # Pass --disable-remote-registry-proxy because ./build/linux/amd64/earthly
+          # speaks the new registry.Copy protocol (#914) while EARTH_BUILDKIT_IMAGE
+          # in this job is still pinned to buildkitd-v0.8.17-fix.1 (old Server.Proxy).
+          ./build/linux/amd64/earthly --ci --output --disable-remote-registry-proxy --build-arg TAG_SUFFIX +ci-release
           # Explicitly output the buildkitd image to local docker daemon
-          ./build/linux/amd64/earthly --ci --image --build-arg TAG="${GITHUB_SHA}-${TAG_SUFFIX}" --build-arg DOCKERHUB_BUILDKIT_IMG=buildkitd-staging ./buildkitd+buildkitd
+          ./build/linux/amd64/earthly --ci --image --disable-remote-registry-proxy --build-arg TAG="${GITHUB_SHA}-${TAG_SUFFIX}" --build-arg DOCKERHUB_BUILDKIT_IMG=buildkitd-staging ./buildkitd+buildkitd
       - name: Save buildkitd image tarball (all runs)
         # Shipping buildkitd as a GHA artifact -- rather than having every
         # downstream test job pull it from ghcr -- moves ~67 in-run image
@@ -119,7 +122,7 @@ jobs:
         # Fork PRs cannot read the binary from ghcr, so it ships in the
         # artifact. Non-fork jobs fetch it via `earth upgrade` instead --
         # rebuilding it here would be minutes of redundant work every run.
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        if: github.repository != 'EarthBuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
         run: |-
           set -euo pipefail
           export TAG_SUFFIX="latest"
