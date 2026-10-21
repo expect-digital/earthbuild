@@ -53,21 +53,17 @@ jobs:
       REP_API_URL: ${{ vars.REP_API_URL }}
       REP_TOKEN: ${{ secrets.REP_TOKEN }}
     steps:
-      # The rep CLI, built from source (private repo, no releases yet)
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: expect-digital/rep
-          ref: main
-          persist-credentials: false
-          token: ${{ secrets.REP_SRC_TOKEN }}
-          path: .rep-src
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: .rep-src/go.mod
-          cache-dependency-path: .rep-src/go.sum
+      # The rep CLI, from a release of the private expect-digital/rep repo:
+      # the release vars.REP_VERSION names, or the latest one when it is unset
       - run: |
-          (cd .rep-src && go build -o "$RUNNER_TEMP/bin/rep" ./cmd/rep)
+          mkdir -p "$RUNNER_TEMP/bin"
+          gh release download ${REP_VERSION:+"$REP_VERSION"} -R expect-digital/rep \
+            -p "rep-linux-$(dpkg --print-architecture)" -O "$RUNNER_TEMP/bin/rep"
+          chmod +x "$RUNNER_TEMP/bin/rep"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+        env:
+          GH_TOKEN: ${{ secrets.REP_SRC_TOKEN }}
+          REP_VERSION: ${{ vars.REP_VERSION }}
 
       # Wakes the builder and points dagger / earth / buildx at it for the following steps
       - run: rep connect
