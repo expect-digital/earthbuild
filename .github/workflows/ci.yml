@@ -72,7 +72,7 @@ jobs:
 
       # --- Build Standard EarthBuild ---
       - name: Login to GitHub Container Registry
-        if: github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.repository == 'EarthBuild/earthbuild' && (github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
       - name: 'Put back the git branch into git (EarthBuild uses it for tagging)'
         run: |
@@ -95,12 +95,12 @@ jobs:
           EARTH_VERSION_FLAG_OVERRIDES="$(tr -d '\n' < .earth_version_flag_overrides)"
           echo "EARTH_VERSION_FLAG_OVERRIDES=$EARTH_VERSION_FLAG_OVERRIDES" >> "$GITHUB_ENV"
       - name: Build and push +ci-release using latest earth build
-        if: github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.repository == 'EarthBuild/earthbuild' && (github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository)
         run: |-
           export TAG_SUFFIX="latest"
           ./build/linux/amd64/earthly --ci --push --build-arg TAG_SUFFIX +ci-release
       - name: Build +ci-release using latest earth build (fork - no push)
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        if: github.repository != 'EarthBuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
         run: |-
           export TAG_SUFFIX="latest"
           # Build ci-release (builds binary and buildkitd but doesn't push)
@@ -134,7 +134,7 @@ jobs:
         # Fork PRs cannot read the binary from ghcr, so it ships in the
         # artifact. Non-fork jobs fetch it via `earth upgrade` instead --
         # rebuilding it here would be minutes of redundant work every run.
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        if: github.repository != 'EarthBuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
         run: |-
           set -euo pipefail
           export TAG_SUFFIX="latest"

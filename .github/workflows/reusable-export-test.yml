@@ -36,7 +36,7 @@ jobs:
   export-test:
     name: Export tests
     runs-on: ${{inputs.RUNS_ON}}
-    if: ${{ !inputs.SKIP_JOB && (github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ !inputs.SKIP_JOB && github.repository == 'EarthBuild/earthbuild' && (github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository) }}
     env:
       FORCE_COLOR: 1
       # Used in our github action as the token - TODO: look to change it into an input
