@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - 'docs/**'
-      - '**.md'
-      - '.github/renovate.json5'
-      - '.github/CODEOWNERS'
-      - 'LICENSE'
+      - "docs/**"
+      - "**.md"
+      - ".github/renovate.json5"
+      - ".github/CODEOWNERS"
+      - "LICENSE"
   pull_request:
     branches: [main, get-ci-working]
   merge_group:
@@ -74,7 +74,7 @@ jobs:
       - name: Login to GitHub Container Registry
         if: github.repository == 'EarthBuild/earthbuild' && (github.event_name == 'push' || github.event_name == 'merge_group' || github.event.pull_request.head.repo.full_name == github.repository)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
-      - name: 'Put back the git branch into git (EarthBuild uses it for tagging)'
+      - name: "Put back the git branch into git (EarthBuild uses it for tagging)"
         run: |
           branch=""
           if [ -n "$GITHUB_HEAD_REF" ]; then
@@ -101,6 +101,8 @@ jobs:
           ./build/linux/amd64/earthly --ci --push --build-arg TAG_SUFFIX +ci-release
       - name: Build +ci-release using latest earth build (fork - no push)
         if: github.repository != 'EarthBuild/earthbuild' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
+        env:
+          EARTH_DISABLE_REMOTE_REGISTRY_PROXY: "true"
         run: |-
           export TAG_SUFFIX="latest"
           # Build ci-release (builds binary and buildkitd but doesn't push)
@@ -164,7 +166,7 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-test-suite.yml
     with:
-      FRONTEND: 'docker'
+      FRONTEND: "docker"
     secrets:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
@@ -177,7 +179,7 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-examples-suite.yml
     with:
-      FRONTEND: 'docker'
+      FRONTEND: "docker"
     secrets:
       DOCKERHUB_MIRROR_PASSWORD: ${{ secrets.DOCKERHUB_MIRROR_PASSWORD }}
       DOCKERHUB_MIRROR_USERNAME: ${{ secrets.DOCKERHUB_MIRROR_USERNAME }}
@@ -192,7 +194,7 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-integration-suite.yml
     with:
-      FRONTEND: 'docker'
+      FRONTEND: "docker"
     secrets:
       DOCKERHUB_MIRROR_PASSWORD: ${{ secrets.DOCKERHUB_MIRROR_PASSWORD }}
       DOCKERHUB_MIRROR_USERNAME: ${{ secrets.DOCKERHUB_MIRROR_USERNAME }}
@@ -208,8 +210,8 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-test-suite.yml
     with:
-      FRONTEND: 'podman'
-      SUDO: 'sudo'
+      FRONTEND: "podman"
+      SUDO: "sudo"
     secrets:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
@@ -222,8 +224,8 @@ jobs:
       packages: read
     uses: $/.github/workflows/ci-examples-suite.yml
     with:
-      FRONTEND: 'podman'
-      SUDO: 'sudo'
+      FRONTEND: "podman"
+      SUDO: "sudo"
     secrets:
       DOCKERHUB_MIRROR_PASSWORD: ${{ secrets.DOCKERHUB_MIRROR_PASSWORD }}
       DOCKERHUB_MIRROR_USERNAME: ${{ secrets.DOCKERHUB_MIRROR_USERNAME }}
