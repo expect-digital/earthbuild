@@ -107,6 +107,12 @@ jobs:
       - name: Display buildkit version
         if: ${{ !inputs.SKIP_JOB }}
         run: |-
+          # With rep connect the buildkitd is the remote builder's, not a local container:
+          # earth prints its version when it connects ("buildkitd | Version ...").
+          if [ -n "${EARTH_BUILDKIT_HOST:-}" ]; then
+            echo "remote buildkitd: ${EARTH_BUILDKIT_HOST}"
+            exit 0
+          fi
           ${INPUTS_SUDO} "${INPUTS_BINARY}" ps -a
           ${INPUTS_SUDO} "${INPUTS_BINARY}" logs earth-buildkitd |& grep 'starting earthly-buildkit'
         shell: bash
