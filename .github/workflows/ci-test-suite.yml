@@ -15,6 +15,10 @@ on:
         required: false
       OTEL_EXPORTER_OTLP_HEADERS:
         required: false
+      REP_TOKEN:
+        required: false
+      REP_SRC_TOKEN:
+        required: false
 
 env:
   OTEL_SERVICE_NAME: ${{ vars.OTEL_SERVICE_NAME }}
@@ -79,3 +83,5 @@ jobs:
     secrets:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      REP_TOKEN: ${{ secrets.REP_TOKEN }}
+      REP_SRC_TOKEN: ${{ secrets.REP_SRC_TOKEN }}

@@ -170,6 +170,8 @@ jobs:
     secrets:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      REP_TOKEN: ${{ secrets.REP_TOKEN }}
+      REP_SRC_TOKEN: ${{ secrets.REP_SRC_TOKEN }}
 
   docker-examples:
     name: Docker Examples
@@ -215,6 +217,8 @@ jobs:
     secrets:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      REP_TOKEN: ${{ secrets.REP_TOKEN }}
+      REP_SRC_TOKEN: ${{ secrets.REP_SRC_TOKEN }}
 
   podman-examples:
     name: Podman Examples
